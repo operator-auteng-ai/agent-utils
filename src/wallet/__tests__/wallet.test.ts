@@ -4,9 +4,9 @@ import { createKeypair } from "../keypair.js"
 
 function createTestWallet(overrides?: Partial<ConstructorParameters<typeof Wallet>[0]>) {
   const { privateKey, account } = createKeypair()
-  const mockFetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
-    new Response(JSON.stringify({ ok: true }), { status: 200 })
-  )
+  const mockFetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }))
   return new Wallet({
     name: "test",
     account,
@@ -26,9 +26,7 @@ describe("Wallet", () => {
   })
 
   it("fetch delegates to paymentFetch", async () => {
-    const mockFetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
-      new Response("ok", { status: 200 })
-    )
+    const mockFetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response("ok", { status: 200 }))
     const w = createTestWallet({ paymentFetch: mockFetch })
 
     const response = await w.fetch("https://example.com/api", {
@@ -62,8 +60,6 @@ describe("Wallet", () => {
   it("waitForFunding throws on timeout", async () => {
     const w = createTestWallet({ network: "base-sepolia" })
     // Require 1 USDC on a random wallet with 100ms timeout — should fail
-    await expect(
-      w.waitForFunding(1_000000n, { timeout: 100, pollInterval: 50 })
-    ).rejects.toThrow("Funding timeout")
+    await expect(w.waitForFunding(1_000000n, { timeout: 100, pollInterval: 50 })).rejects.toThrow("Funding timeout")
   })
 })

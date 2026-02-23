@@ -83,8 +83,7 @@ describe("wallet.create", () => {
   })
 
   it("rejects invalid wallet names", async () => {
-    await expect(wallet.create({ name: "Bad Name", walletsDir: WALLETS_DIR }))
-      .rejects.toThrow("Invalid wallet name")
+    await expect(wallet.create({ name: "Bad Name", walletsDir: WALLETS_DIR })).rejects.toThrow("Invalid wallet name")
   })
 
   it("migrates legacy wallet.json for default name", async () => {

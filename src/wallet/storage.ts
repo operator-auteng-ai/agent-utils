@@ -6,9 +6,7 @@ const VALID_NAME = /^[a-z0-9_-]+$/
 
 export function validateWalletName(name: string): void {
   if (!VALID_NAME.test(name)) {
-    throw new Error(
-      `Invalid wallet name "${name}". Use lowercase letters, numbers, hyphens, and underscores only.`
-    )
+    throw new Error(`Invalid wallet name "${name}". Use lowercase letters, numbers, hyphens, and underscores only.`)
   }
 }
 

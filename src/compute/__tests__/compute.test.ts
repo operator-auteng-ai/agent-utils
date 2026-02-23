@@ -83,31 +83,25 @@ describe("compute.run", () => {
 
   it("throws when code is missing", async () => {
     const w = createMockWallet()
-    await expect(
-      compute.run({ code: "", stack: "python", wallet: w })
-    ).rejects.toThrow("'code' is required")
+    await expect(compute.run({ code: "", stack: "python", wallet: w })).rejects.toThrow("'code' is required")
   })
 
   it("throws when stack is missing", async () => {
     const w = createMockWallet()
-    await expect(
-      compute.run({ code: "x = 1", stack: "" as any, wallet: w })
-    ).rejects.toThrow("'stack' is required")
+    await expect(compute.run({ code: "x = 1", stack: "" as any, wallet: w })).rejects.toThrow("'stack' is required")
   })
 
   it("throws when wallet is missing", async () => {
-    await expect(
-      compute.run({ code: "x = 1", stack: "python", wallet: undefined as any })
-    ).rejects.toThrow("'wallet' is required")
+    await expect(compute.run({ code: "x = 1", stack: "python", wallet: undefined as any })).rejects.toThrow(
+      "'wallet' is required"
+    )
   })
 
   it("throws on non-200 response", async () => {
-    const w = createMockWallet(
-      new Response("Internal Server Error", { status: 500 })
+    const w = createMockWallet(new Response("Internal Server Error", { status: 500 }))
+    await expect(compute.run({ code: "x = 1", stack: "python", wallet: w })).rejects.toThrow(
+      "Compute request failed (500)"
     )
-    await expect(
-      compute.run({ code: "x = 1", stack: "python", wallet: w })
-    ).rejects.toThrow("Compute request failed (500)")
   })
 })
 
