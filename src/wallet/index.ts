@@ -8,6 +8,7 @@ import type { CreateWalletOptions } from "./types.js"
 const DEFAULT_WALLETS_DIR = ".auteng/wallets"
 
 const _wallets = new Map<string, Wallet>()
+let _walletsDir = resolve(DEFAULT_WALLETS_DIR)
 
 export const wallet = {
   /**
@@ -21,6 +22,7 @@ export const wallet = {
     if (_wallets.has(name)) return _wallets.get(name)!
 
     const dir = resolve(opts?.walletsDir ?? DEFAULT_WALLETS_DIR)
+    _walletsDir = dir
     const filePath = join(dir, `${name}.json`)
     const network = opts?.network ?? "base"
     const rpcUrl = opts?.rpcUrl
@@ -71,7 +73,7 @@ export const wallet = {
 
     if (_wallets.has(name)) return _wallets.get(name)!
 
-    const filePath = join(resolve(DEFAULT_WALLETS_DIR), `${name}.json`)
+    const filePath = join(_walletsDir, `${name}.json`)
     const data = readWalletFile(filePath)
     if (!data) throw new Error(`Wallet "${name}" not found`)
 
@@ -90,11 +92,16 @@ export const wallet = {
 
   /** List all persisted wallets. */
   list(): Wallet[] {
-    const dir = resolve(DEFAULT_WALLETS_DIR)
-    const names = listWalletFiles(dir)
+    const names = listWalletFiles(_walletsDir)
     return names.map((n) => {
       if (_wallets.has(n)) return _wallets.get(n)!
       return wallet.get(n)
     })
+  },
+
+  /** @internal Clear in-memory cache and reset wallets dir. For testing only. */
+  _reset(): void {
+    _wallets.clear()
+    _walletsDir = resolve(DEFAULT_WALLETS_DIR)
   },
 }

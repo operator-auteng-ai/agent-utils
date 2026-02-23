@@ -1,6 +1,6 @@
 # @auteng/agent-utils
 
-Utility belt for autonomous AI agents — multi-wallet, compute, and x402 payments.
+Give your AI agent its own crypto wallets. Create purpose-specific wallets funded with USDC on Base, then let the agent spend autonomously on x402-enabled services like sandboxed compute. No accounts, no KYC — just wallet addresses and USDC.
 
 ## Install
 
@@ -8,36 +8,54 @@ Utility belt for autonomous AI agents — multi-wallet, compute, and x402 paymen
 npm install @auteng/agent-utils
 ```
 
+## Quick Start
+
+```typescript
+import { wallet, compute } from '@auteng/agent-utils';
+
+// 1. Create a wallet for this task
+const w = await wallet.create({ name: "my-task" });
+console.log(`Fund me: send USDC on Base to ${w.address}`);
+
+// 2. Wait for funding
+await w.waitForFunding(5_000000n); // wait for $5 USDC
+
+// 3. Run sandboxed code (payment handled automatically)
+const result = await compute.run({
+  code: 'print("hello from the sandbox")',
+  stack: 'python',
+  wallet: w,
+});
+console.log(result.stdout);
+```
+
 ## Wallets
 
-Create named crypto wallets (USDC on Base) so your agent can pay for x402 services. Each wallet has its own keypair, address, and balance.
+Each wallet is an independent keypair with its own address and balance. Create as many as you need — one per task, one per month, one per budget.
 
 ```typescript
 import { wallet } from '@auteng/agent-utils';
 
-// Create wallets for different purposes
-const monthly = await wallet.create({ name: "monthly-budget" });
-const task = await wallet.create({ name: "task-xyz" });
-
-console.log(monthly.address); // 0xABC...
-console.log(task.address);    // 0xDEF...
+const monthly = await wallet.create({ name: "feb-2026" });
+const task    = await wallet.create({ name: "data-pipeline" });
+const dev     = await wallet.create({ name: "testnet", network: "base-sepolia" });
 ```
 
-Wallets are stored at `.auteng/wallets/<name>.json`. If a wallet with that name already exists, it loads it.
+Wallets are persisted at `.auteng/wallets/<name>.json`. Creating a wallet that already exists loads it from disk.
 
 ### Check balance
 
 ```typescript
 const balance = await monthly.checkBalance();
-// Returns USDC balance in minor units (6 decimals)
-// e.g., 10_000000n = $10.00
+// Returns USDC in minor units (6 decimals)
+// 10_000000n = $10.00 USDC
 ```
 
 ### Wait for funding
 
 ```typescript
 await monthly.waitForFunding(10_000000n);
-// Polls every 10s until >= 10 USDC is available
+// Polls Base every 10s until >= $10 USDC is available
 ```
 
 ### x402 fetch
@@ -52,18 +70,23 @@ const res = await monthly.fetch('https://x402.auteng.ai/api/x402/compute', {
 });
 ```
 
-If the server returns `402 Payment Required`, the library signs an EIP-3009 authorization and retries with payment headers.
+If the server returns `402 Payment Required`, the library signs an EIP-3009 authorization and retries with payment headers. No gas needed.
 
 ### Retrieve and list wallets
 
 ```typescript
-const w = wallet.get("monthly-budget"); // load by name
-const all = wallet.list();              // list all wallets
+const w = wallet.get("feb-2026");   // load by name
+const all = wallet.list();           // list all wallets
+
+for (const w of all) {
+  const bal = await w.checkBalance();
+  console.log(`${w.name}: ${w.address} — ${bal} USDC`);
+}
 ```
 
 ## Compute
 
-Run sandboxed code via AutEng's x402 compute endpoint:
+Run sandboxed code via AutEng's x402 compute endpoint. Pass a wallet to pay for execution:
 
 ```typescript
 import { wallet, compute } from '@auteng/agent-utils';
@@ -81,16 +104,24 @@ console.log(result.stdout); // "hello world\n"
 
 ### Pricing
 
+| Size  | vCPU | RAM   | Base price | Per second |
+|-------|------|-------|-----------|------------|
+| small | 2    | 1 GB  | $0.002    | $0.00005   |
+| med   | 4    | 4 GB  | $0.008    | $0.00012   |
+| large | 8    | 16 GB | $0.03     | $0.00025   |
+
 ```typescript
-compute.pricing();
-// { small: { base_price_usd: 0.002, ... }, med: { ... }, large: { ... } }
+compute.pricing(); // returns full pricing table
 ```
 
-| Size  | vCPU | RAM  | Base price | Per second |
-|-------|------|------|-----------|------------|
-| small | 2    | 1 GB | $0.002    | $0.00005   |
-| med   | 4    | 4 GB | $0.008    | $0.00012   |
-| large | 8    | 16 GB| $0.03     | $0.00025   |
+## Development
+
+```bash
+npm install          # install dependencies
+npm run build        # build CJS/ESM/DTS to dist/
+npm test             # run unit + integration tests
+npm run test:watch   # run tests in watch mode
+```
 
 ## License
 
