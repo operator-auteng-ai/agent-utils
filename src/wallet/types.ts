@@ -1,13 +1,18 @@
 export type Network = "base" | "base-sepolia"
 
-export interface WalletConfig {
-  /** Path to store the wallet keypair. Default: `.auteng/wallet.json` */
-  keyPath?: string
+export interface CreateWalletOptions {
+  /** Wallet identifier. Default: "default" */
+  name?: string
   /** Network to use. Default: `base` */
   network?: Network
   /** Custom RPC endpoint. Default: public Base RPC */
   rpcUrl?: string
+  /** Base directory for wallet storage. Default: ".auteng/wallets" */
+  walletsDir?: string
 }
+
+/** @deprecated Use CreateWalletOptions instead */
+export type WalletConfig = CreateWalletOptions
 
 export interface WalletFile {
   privateKey: `0x${string}`

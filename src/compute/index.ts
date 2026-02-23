@@ -1,4 +1,3 @@
-import { wallet } from "../wallet/index.js"
 import type { ComputeRequest, ComputeResponse, PricingTier, Size } from "./types.js"
 
 const DEFAULT_ENDPOINT = "https://x402.auteng.ai/api/x402/compute"
@@ -55,7 +54,11 @@ export const compute = {
       ...(request.files != null && { files: request.files }),
     }
 
-    const response = await wallet.fetch(_endpoint, {
+    if (!request.wallet) {
+      throw new Error("compute.run: 'wallet' is required")
+    }
+
+    const response = await request.wallet.fetch(_endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

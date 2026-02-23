@@ -1,100 +1,100 @@
-import { resolve } from "node:path"
-import type { PrivateKeyAccount } from "viem"
+import { join, resolve } from "node:path"
 import { createKeypair, loadKeypair } from "./keypair.js"
-import { readWalletFile, writeWalletFile } from "./storage.js"
-import { getUsdcBalance } from "./balance.js"
+import { readWalletFile, writeWalletFile, listWalletFiles, migrateLegacyWallet, validateWalletName } from "./storage.js"
 import { createPaymentFetch } from "../x402/index.js"
-import type { Network, WalletConfig, WaitForFundingOptions } from "./types.js"
+import { Wallet } from "./wallet.js"
+import type { CreateWalletOptions } from "./types.js"
 
-// --- Internal state ---
+const DEFAULT_WALLETS_DIR = ".auteng/wallets"
 
-let _account: PrivateKeyAccount | null = null
-let _privateKey: `0x${string}` | null = null
-let _network: Network = "base"
-let _rpcUrl: string | undefined
-let _paymentFetch: typeof globalThis.fetch | null = null
-
-function ensureCreated(): void {
-  if (!_account) {
-    throw new Error("Wallet not initialized. Call wallet.create() first.")
-  }
-}
-
-// --- Public API ---
+const _wallets = new Map<string, Wallet>()
 
 export const wallet = {
   /**
-   * Create a new EVM wallet or load an existing one from disk.
-   * Idempotent: if the wallet file already exists, loads it.
+   * Create a new named wallet or load an existing one from disk.
+   * Idempotent: if a wallet with this name already exists, returns it.
    */
-  async create(opts?: WalletConfig): Promise<void> {
-    const keyPath = resolve(opts?.keyPath ?? ".auteng/wallet.json")
-    _network = opts?.network ?? "base"
-    _rpcUrl = opts?.rpcUrl
+  async create(opts?: CreateWalletOptions): Promise<Wallet> {
+    const name = opts?.name ?? "default"
+    validateWalletName(name)
 
-    const existing = readWalletFile(keyPath)
+    if (_wallets.has(name)) return _wallets.get(name)!
+
+    const dir = resolve(opts?.walletsDir ?? DEFAULT_WALLETS_DIR)
+    const filePath = join(dir, `${name}.json`)
+    const network = opts?.network ?? "base"
+    const rpcUrl = opts?.rpcUrl
+
+    let existing = readWalletFile(filePath)
+
+    if (!existing && name === "default") {
+      existing = migrateLegacyWallet(dir)
+    }
+
+    let privateKey: `0x${string}`
+    let account: ReturnType<typeof loadKeypair>["account"]
+
     if (existing) {
-      _privateKey = existing.privateKey
-      const { account } = loadKeypair(existing.privateKey)
-      _account = account
-      _network = existing.network
+      privateKey = existing.privateKey
+      account = loadKeypair(existing.privateKey).account
     } else {
-      const { privateKey, account } = createKeypair()
-      _privateKey = privateKey
-      _account = account
-      writeWalletFile(keyPath, {
+      const kp = createKeypair()
+      privateKey = kp.privateKey
+      account = kp.account
+      writeWalletFile(filePath, {
         privateKey,
         address: account.address,
-        network: _network,
+        network,
       })
     }
 
-    _paymentFetch = createPaymentFetch(_privateKey!, _network, _rpcUrl)
-  },
-
-  /** The wallet's public address. Throws if not created. */
-  get address(): `0x${string}` {
-    ensureCreated()
-    return _account!.address
-  },
-
-  /** Check USDC balance on Base. Returns balance in minor units (6 decimals). */
-  async checkBalance(): Promise<bigint> {
-    ensureCreated()
-    return getUsdcBalance(_account!.address, _network, _rpcUrl)
-  },
-
-  /**
-   * Poll until USDC balance >= minAmount.
-   * @param minAmount - minimum USDC balance in minor units (6 decimals)
-   */
-  async waitForFunding(minAmount: bigint, opts?: WaitForFundingOptions): Promise<void> {
-    ensureCreated()
-    const interval = opts?.pollInterval ?? 10_000
-    const deadline = opts?.timeout ? Date.now() + opts.timeout : null
-
-    while (true) {
-      const balance = await getUsdcBalance(_account!.address, _network, _rpcUrl)
-      if (balance >= minAmount) return
-
-      if (deadline && Date.now() >= deadline) {
-        throw new Error(`Funding timeout: balance ${balance} < required ${minAmount}`)
-      }
-
-      await new Promise((r) => setTimeout(r, interval))
-    }
+    const effectiveNetwork = existing?.network ?? network
+    const paymentFetch = createPaymentFetch(privateKey, effectiveNetwork, rpcUrl)
+    const w = new Wallet({
+      name,
+      account,
+      privateKey,
+      network: effectiveNetwork,
+      rpcUrl,
+      paymentFetch,
+    })
+    _wallets.set(name, w)
+    return w
   },
 
   /**
-   * Drop-in `fetch()` replacement that handles x402 payments automatically.
-   * If the server returns 402, the library signs an EIP-3009 authorization
-   * and retries the request with payment headers.
+   * Retrieve a previously-created wallet by name.
+   * Loads from disk if not in memory. Throws if not found.
    */
-  async fetch(input: string | URL | Request, init?: RequestInit): Promise<Response> {
-    ensureCreated()
-    if (!_paymentFetch) {
-      throw new Error("Payment layer not initialized")
-    }
-    return _paymentFetch(input, init)
+  get(name: string): Wallet {
+    validateWalletName(name)
+
+    if (_wallets.has(name)) return _wallets.get(name)!
+
+    const filePath = join(resolve(DEFAULT_WALLETS_DIR), `${name}.json`)
+    const data = readWalletFile(filePath)
+    if (!data) throw new Error(`Wallet "${name}" not found`)
+
+    const { account } = loadKeypair(data.privateKey)
+    const paymentFetch = createPaymentFetch(data.privateKey, data.network)
+    const w = new Wallet({
+      name,
+      account,
+      privateKey: data.privateKey,
+      network: data.network,
+      paymentFetch,
+    })
+    _wallets.set(name, w)
+    return w
+  },
+
+  /** List all persisted wallets. */
+  list(): Wallet[] {
+    const dir = resolve(DEFAULT_WALLETS_DIR)
+    const names = listWalletFiles(dir)
+    return names.map((n) => {
+      if (_wallets.has(n)) return _wallets.get(n)!
+      return wallet.get(n)
+    })
   },
 }
