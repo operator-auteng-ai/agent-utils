@@ -1,31 +1,24 @@
-import { x402Client } from "@x402/core/client"
-import { registerExactEvmScheme } from "@x402/evm/exact/client"
-import { toClientEvmSigner } from "@x402/evm"
-import { wrapFetchWithPayment } from "@x402/fetch"
-import { privateKeyToAccount } from "viem/accounts"
-import { createPublicClient, http } from "viem"
-import { base, baseSepolia } from "viem/chains"
-import type { Network } from "../wallet/types.js"
+// Internal — used by wallet module
+export { createPaymentFetch } from "./payment-fetch.js"
 
-/**
- * Create a fetch function that automatically handles x402 payments.
- * When the server returns 402, the SDK signs an EIP-3009 authorization
- * using the provided private key and retries with payment headers.
- */
-export function createPaymentFetch(
-  privateKey: `0x${string}`,
-  network: Network = "base",
-  rpcUrl?: string
-): typeof globalThis.fetch {
-  const account = privateKeyToAccount(privateKey)
-  const chain = network === "base" ? base : baseSepolia
-  const publicClient = createPublicClient({
-    chain,
-    transport: http(rpcUrl),
-  })
-  const signer = toClientEvmSigner(account, publicClient)
+// Public x402 convenience functions
+import { probe } from "./probe.js"
+import { discover } from "./discover.js"
+import { formatPrice } from "./format.js"
 
-  const client = new x402Client()
-  registerExactEvmScheme(client, { signer })
-  return wrapFetchWithPayment(fetch, client)
+export const x402 = {
+  probe,
+  discover,
+  formatPrice,
 }
+
+export type {
+  ProbeResult,
+  ProbeOptions,
+  PaymentRequiredResponse,
+  PaymentOption,
+  BazaarService,
+  DiscoverResult,
+  DiscoverOptions,
+  FormatPriceOptions,
+} from "./types.js"

@@ -1,6 +1,6 @@
 # @auteng/agent-utils
 
-Give your AI agent its own crypto wallets. Create purpose-specific wallets funded with USDC on Base, then let the agent spend autonomously on x402-enabled services like sandboxed compute. No accounts, no KYC — just wallet addresses and USDC.
+Utility belt for autonomous AI agents. Create crypto wallets, discover and pay for x402-enabled services, and run sandboxed compute — all with USDC on Base. No accounts, no KYC — just wallet addresses and USDC.
 
 ## Install
 
@@ -11,22 +11,61 @@ npm install @auteng/agent-utils
 ## Quick Start
 
 ```typescript
-import { wallet, compute } from '@auteng/agent-utils';
+import { wallet, x402, compute } from '@auteng/agent-utils';
 
-// 1. Create a wallet for this task
+// Probe any URL to check if it's x402-enabled
+const info = await x402.probe('https://api.example.com/generate');
+console.log(info.price); // "$0.05 USDC on Base"
+
+// Create a wallet and pay for it
 const w = await wallet.create({ name: "my-task" });
-console.log(`Fund me: send USDC on Base to ${w.address}`);
-
-// 2. Wait for funding
-await w.waitForFunding(5_000000n); // wait for $5 USDC
-
-// 3. Run sandboxed code (payment handled automatically)
-const result = await compute.run({
-  code: 'print("hello from the sandbox")',
-  stack: 'python',
-  wallet: w,
+const res = await w.fetch('https://api.example.com/generate', {
+  method: 'POST',
+  body: JSON.stringify({ prompt: 'hello' }),
 });
-console.log(result.stdout);
+```
+
+## x402 — Discover & Inspect Services
+
+Standalone functions for working with x402 services. No wallet needed.
+
+### Probe a URL
+
+Check if a URL is x402-enabled and see what it costs:
+
+```typescript
+import { x402 } from '@auteng/agent-utils';
+
+const info = await x402.probe('https://api.example.com/generate');
+if (info.enabled) {
+  console.log(info.price);                        // "$0.05 USDC on Base"
+  console.log(info.paymentRequired.accepts[0]);    // full payment details
+  console.log(info.paymentRequired.resource);      // what you're paying for
+}
+```
+
+### Discover services
+
+Browse the [Bazaar](https://www.x402.org/) registry to find x402 services:
+
+```typescript
+const { services, total } = await x402.discover({ limit: 10 });
+for (const svc of services) {
+  console.log(`${svc.description} — ${svc.price}`);
+  console.log(`  ${svc.url}`);
+}
+```
+
+### Format prices
+
+Convert raw x402 amounts to human-readable strings:
+
+```typescript
+x402.formatPrice("2000", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "eip155:8453");
+// → "$0.002 USDC on Base"
+
+x402.formatPrice("2000", "0x833589f...", "eip155:8453", { short: true });
+// → "$0.002 USDC"
 ```
 
 ## Wallets
@@ -38,7 +77,6 @@ import { wallet } from '@auteng/agent-utils';
 
 const monthly = await wallet.create({ name: "feb-2026" });
 const task    = await wallet.create({ name: "data-pipeline" });
-const dev     = await wallet.create({ name: "testnet", network: "base-sepolia" });
 ```
 
 Wallets are persisted at `.auteng/wallets/<name>.json`. Creating a wallet that already exists loads it from disk.
@@ -58,15 +96,15 @@ await monthly.waitForFunding(10_000000n);
 // Polls Base every 10s until >= $10 USDC is available
 ```
 
-### x402 fetch
+### Pay any x402 service
 
 Drop-in `fetch()` replacement that handles x402 payments automatically:
 
 ```typescript
-const res = await monthly.fetch('https://x402.auteng.ai/api/x402/compute', {
+const res = await monthly.fetch('https://any-x402-service.com/api', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ code: 'print("hi")', stack: 'python', size: 'small' }),
+  body: JSON.stringify({ prompt: 'hello' }),
 });
 ```
 
@@ -84,9 +122,9 @@ for (const w of all) {
 }
 ```
 
-## Compute
+## Compute (AutEng)
 
-Run sandboxed code via AutEng's x402 compute endpoint. Pass a wallet to pay for execution:
+Convenience wrapper for AutEng's x402 sandboxed compute service:
 
 ```typescript
 import { wallet, compute } from '@auteng/agent-utils';
@@ -116,7 +154,7 @@ compute.pricing(); // returns full pricing table
 
 ## Demo
 
-Run the included demo to see everything in action — wallet creation, funding, and autonomous compute:
+Run the included demo to see wallet creation, funding, and compute in action:
 
 ```bash
 node demo.mjs
@@ -137,11 +175,6 @@ node demo.mjs
   Balance: $0.0000
 ────────────────────────────────────────────────────────
 
-  This wallet needs at least $1.0000 USDC to run the demo.
-
-  Please send USDC on **Base** to:
-  0x9cc8...e18
-
   Waiting for funds...
   Funded! New balance: $1.0000
 ────────────────────────────────────────────────────────
@@ -149,31 +182,19 @@ node demo.mjs
   Running compute jobs...
 
   ▸ Python — Fibonacci
-    fib(10) = 55
-    fib(20) = 6765
-    fib(30) = 832040
-    fib(40) = 102334155
     fib(50) = 12586269025
 
   ▸ Python — System info
-    Python 3.12.12
-    OS: Linux 6.1.158
-    Arch: x86_64
-    CPUs: 2
+    Python 3.12.12, Linux 6.1.158, x86_64, 2 CPUs
 
   ▸ Node — UUID generation
     f8b260ec-2dea-401b-b807-544f366a8588
-    8eb115bb-e943-455b-b675-a177ed2c5e81
     ...
 
-  Starting balance: $1.0000
-  Final balance:    $0.9980
-  Spent:            $0.0020
+  Spent: $0.0020
 ────────────────────────────────────────────────────────
   Done!
 ```
-
-The demo creates a wallet, waits for you to fund it with $1 USDC on Base, then runs three sandboxed compute jobs (Python + Node) — all paid automatically via x402. Total cost: ~$0.002.
 
 ## Development
 

@@ -1,7 +1,7 @@
 import { join, resolve } from "node:path"
 import { createKeypair, loadKeypair } from "./keypair.js"
 import { readWalletFile, writeWalletFile, listWalletFiles, migrateLegacyWallet, validateWalletName } from "./storage.js"
-import { createPaymentFetch } from "../x402/index.js"
+import { createPaymentFetch } from "../x402/payment-fetch.js"
 import { Wallet } from "./wallet.js"
 import type { CreateWalletOptions } from "./types.js"
 
