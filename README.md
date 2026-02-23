@@ -114,6 +114,67 @@ console.log(result.stdout); // "hello world\n"
 compute.pricing(); // returns full pricing table
 ```
 
+## Demo
+
+Run the included demo to see everything in action — wallet creation, funding, and autonomous compute:
+
+```bash
+node demo.mjs
+```
+
+```
+────────────────────────────────────────────────────────
+  POCKET MONEY DEMO — autonomous compute with x402
+────────────────────────────────────────────────────────
+
+  Compute pricing:
+    small  → $0.002 base + $0.00005/s  (2 vCPU, 1GB RAM)
+    med    → $0.008 base + $0.00012/s  (4 vCPU, 4GB RAM)
+    large  → $0.03 base + $0.00025/s  (8 vCPU, 16GB RAM)
+
+  Wallet: "demo-compute"
+  Address: 0x9cc8...e18
+  Balance: $0.0000
+────────────────────────────────────────────────────────
+
+  This wallet needs at least $1.0000 USDC to run the demo.
+
+  Please send USDC on **Base** to:
+  0x9cc8...e18
+
+  Waiting for funds...
+  Funded! New balance: $1.0000
+────────────────────────────────────────────────────────
+
+  Running compute jobs...
+
+  ▸ Python — Fibonacci
+    fib(10) = 55
+    fib(20) = 6765
+    fib(30) = 832040
+    fib(40) = 102334155
+    fib(50) = 12586269025
+
+  ▸ Python — System info
+    Python 3.12.12
+    OS: Linux 6.1.158
+    Arch: x86_64
+    CPUs: 2
+
+  ▸ Node — UUID generation
+    f8b260ec-2dea-401b-b807-544f366a8588
+    8eb115bb-e943-455b-b675-a177ed2c5e81
+    ...
+
+  Starting balance: $1.0000
+  Final balance:    $0.9980
+  Spent:            $0.0020
+────────────────────────────────────────────────────────
+  Done!
+```
+
+The demo creates a wallet, waits for you to fund it with $1 USDC on Base, then runs three sandboxed compute jobs (Python + Node) — all paid automatically via x402. Total cost: ~$0.002.
+
 ## Development
 
 ```bash

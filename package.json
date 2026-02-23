@@ -1,6 +1,6 @@
 {
   "name": "@auteng/agent-utils",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Utility belt for autonomous AI agents — wallet, compute, and more",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -14,6 +14,7 @@
   },
   "files": [
     "dist",
+    "demo.mjs",
     "README.md"
   ],
   "scripts": {
