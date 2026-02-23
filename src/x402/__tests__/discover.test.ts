@@ -44,9 +44,7 @@ beforeEach(() => {
 
 describe("discover", () => {
   it("returns normalized services", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(bazaarResponse), { status: 200 }),
-    )
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(bazaarResponse), { status: 200 }))
 
     const result = await discover()
     expect(result.total).toBe(42)
@@ -63,9 +61,9 @@ describe("discover", () => {
   })
 
   it("forwards pagination params", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ items: [], total: 0 }), { status: 200 }),
-    )
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ items: [], total: 0 }), { status: 200 }))
 
     await discover({ limit: 5, offset: 10 })
 
@@ -75,9 +73,9 @@ describe("discover", () => {
   })
 
   it("uses custom bazaarUrl", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ items: [], total: 0 }), { status: 200 }),
-    )
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify({ items: [], total: 0 }), { status: 200 }))
 
     await discover({ bazaarUrl: "https://custom.bazaar.com/list" })
 
@@ -86,16 +84,14 @@ describe("discover", () => {
   })
 
   it("throws on non-200 response", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response("Server Error", { status: 500 }),
-    )
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("Server Error", { status: 500 }))
 
     await expect(discover()).rejects.toThrow("Bazaar request failed (500)")
   })
 
   it("handles empty items", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ items: [], total: 0 }), { status: 200 }),
+      new Response(JSON.stringify({ items: [], total: 0 }), { status: 200 })
     )
 
     const result = await discover()

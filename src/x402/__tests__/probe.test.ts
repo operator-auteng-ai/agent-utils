@@ -45,9 +45,7 @@ beforeEach(() => {
 
 describe("probe", () => {
   it("detects x402 v2 endpoint", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(v2Response), { status: 402 }),
-    )
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(v2Response), { status: 402 }))
 
     const result = await probe("https://api.example.com/compute")
     expect(result.enabled).toBe(true)
@@ -59,9 +57,7 @@ describe("probe", () => {
   })
 
   it("normalizes v1 response", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(v1Response), { status: 402 }),
-    )
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(v1Response), { status: 402 }))
 
     const result = await probe("https://api.example.com/weather")
     expect(result.enabled).toBe(true)
@@ -72,9 +68,7 @@ describe("probe", () => {
   })
 
   it("returns disabled for 200 responses", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response("ok", { status: 200 }),
-    )
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("ok", { status: 200 }))
 
     const result = await probe("https://free-api.example.com")
     expect(result.enabled).toBe(false)
@@ -84,9 +78,7 @@ describe("probe", () => {
   })
 
   it("returns disabled for 500 responses", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response("error", { status: 500 }),
-    )
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("error", { status: 500 }))
 
     const result = await probe("https://broken.example.com")
     expect(result.enabled).toBe(false)
@@ -94,9 +86,7 @@ describe("probe", () => {
   })
 
   it("returns disabled for 402 with invalid JSON", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response("not json", { status: 402 }),
-    )
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("not json", { status: 402 }))
 
     const result = await probe("https://weird.example.com")
     expect(result.enabled).toBe(false)
@@ -104,9 +94,9 @@ describe("probe", () => {
   })
 
   it("forwards method, headers, and body", async () => {
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(v2Response), { status: 402 }),
-    )
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify(v2Response), { status: 402 }))
 
     await probe("https://api.example.com/compute", {
       method: "POST",

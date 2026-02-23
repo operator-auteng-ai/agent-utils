@@ -74,10 +74,12 @@ function normalizePaymentRequired(raw: any): PaymentRequiredResponse | null {
         description: firstAccept.description ?? raw.resource?.description,
         mimeType: firstAccept.mimeType ?? raw.resource?.mimeType,
       },
-      accepts: raw.accepts.map((a: Record<string, unknown>) => normalizeAccept({
-        ...a,
-        amount: a.maxAmountRequired,
-      })),
+      accepts: raw.accepts.map((a: Record<string, unknown>) =>
+        normalizeAccept({
+          ...a,
+          amount: a.maxAmountRequired,
+        })
+      ),
       extensions: raw.extensions ?? undefined,
     }
   }

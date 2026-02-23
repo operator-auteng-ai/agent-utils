@@ -65,20 +65,14 @@ function normalizeBazaarItem(item: any): BazaarService | null {
   })
 
   // Find cheapest option for display price
-  const cheapest = normalizedAccepts.reduce((min, a) =>
-    BigInt(a.amount) < BigInt(min.amount) ? a : min
-  )
+  const cheapest = normalizedAccepts.reduce((min, a) => (BigInt(a.amount) < BigInt(min.amount) ? a : min))
   const price = formatPrice(cheapest.amount, cheapest.asset, cheapest.network)
 
   // Extract description from various possible locations
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const firstAccept = accepts[0] as any
   const description: string | null =
-    item.description ??
-    item.resource?.description ??
-    firstAccept?.description ??
-    item.metadata?.description ??
-    null
+    item.description ?? item.resource?.description ?? firstAccept?.description ?? item.metadata?.description ?? null
 
   // Extract URL
   const url: string =

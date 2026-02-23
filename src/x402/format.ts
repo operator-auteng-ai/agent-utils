@@ -10,7 +10,7 @@ const KNOWN_ASSETS: Record<string, { symbol: string; decimals: number; prefix: s
 const NETWORK_NAMES: Record<string, string> = {
   "eip155:8453": "Base",
   "eip155:84532": "Base Sepolia",
-  "base": "Base",
+  base: "Base",
   "base-sepolia": "Base Sepolia",
 }
 
@@ -24,12 +24,7 @@ const NETWORK_NAMES: Record<string, string> = {
  * formatPrice("2000", "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "eip155:8453")
  * // → "$0.002 USDC on Base"
  */
-export function formatPrice(
-  amount: string,
-  asset: string,
-  network: string,
-  options?: FormatPriceOptions,
-): string {
+export function formatPrice(amount: string, asset: string, network: string, options?: FormatPriceOptions): string {
   const known = KNOWN_ASSETS[asset.toLowerCase()]
   const networkName = NETWORK_NAMES[network]
 
