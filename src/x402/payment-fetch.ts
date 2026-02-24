@@ -5,7 +5,7 @@ import { wrapFetchWithPayment } from "@x402/fetch"
 import { privateKeyToAccount } from "viem/accounts"
 import { createPublicClient, http } from "viem"
 import { base, baseSepolia } from "viem/chains"
-import type { Network } from "../wallet/types.js"
+import type { Network } from "./types.js"
 
 /**
  * Create a fetch function that automatically handles x402 payments.

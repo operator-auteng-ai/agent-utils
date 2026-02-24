@@ -1,3 +1,7 @@
+// ─── Network ─────────────────────────────────────────────────
+
+export type Network = "base" | "base-sepolia"
+
 // ─── Shared ──────────────────────────────────────────────────
 
 /** A single accepted payment option from a 402 response. */

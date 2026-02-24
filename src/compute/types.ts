@@ -1,15 +1,18 @@
-import type { Wallet } from "../wallet/wallet.js"
-
 export type Stack = "python" | "node"
 export type Size = "small" | "med" | "large"
+
+/** Any object with a fetch method — pocket-money Wallet, custom wrapper, etc. */
+export interface ComputeWallet {
+  fetch(input: string | URL | Request, init?: RequestInit): Promise<Response>
+}
 
 export interface ComputeRequest {
   /** The code to execute */
   code: string
   /** Runtime stack: 'python' (3.14) or 'node' (24 LTS) */
   stack: Stack
-  /** The wallet to pay from */
-  wallet: Wallet
+  /** The wallet to pay from — any object with a fetch() method */
+  wallet: ComputeWallet
   /** Sandbox size. Default: 'small' */
   size?: Size
   /** Execution timeout in seconds. Default: per-size default */

@@ -1,4 +1,4 @@
-// Internal — used by wallet module
+// Create a payment-wrapped fetch from a private key + network
 export { createPaymentFetch } from "./payment-fetch.js"
 
 // Public x402 convenience functions

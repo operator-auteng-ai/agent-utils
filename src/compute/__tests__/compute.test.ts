@@ -1,10 +1,8 @@
 import { describe, it, expect, vi } from "vitest"
 import { compute } from "../index.js"
-import { Wallet } from "../../wallet/wallet.js"
-import { createKeypair } from "../../wallet/keypair.js"
+import type { ComputeWallet } from "../types.js"
 
-function createMockWallet(fetchResponse?: Response) {
-  const { privateKey, account } = createKeypair()
+function createMockWallet(fetchResponse?: Response): ComputeWallet {
   const mockFetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(
     fetchResponse ??
       new Response(
@@ -17,13 +15,7 @@ function createMockWallet(fetchResponse?: Response) {
         { status: 200 }
       )
   )
-  return new Wallet({
-    name: "test-compute",
-    account,
-    privateKey,
-    network: "base",
-    paymentFetch: mockFetch,
-  })
+  return { fetch: mockFetch }
 }
 
 describe("compute.run", () => {
